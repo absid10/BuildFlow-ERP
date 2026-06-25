@@ -5,6 +5,14 @@ import AppLayout from './components/layout/AppLayout';
 import LoginPage from './pages/auth/LoginPage';
 import DashboardPage from './pages/dashboard/DashboardPage';
 import ProjectsPage from './pages/projects/ProjectsPage';
+import EmployeeListPage from './pages/office/EmployeeListPage';
+import SalaryPage from './pages/office/SalaryPage';
+import OfficeExpensePage from './pages/office/OfficeExpensePage';
+import InvestmentListPage from './pages/investments/InvestmentListPage';
+import SaleListPage from './pages/sales/SaleListPage';
+import TuesdayPaymentPage from './pages/tuesday-payments/TuesdayPaymentPage';
+import LoanListPage from './pages/loans/LoanListPage';
+import ReportsPage from './pages/reports/ReportsPage';
 
 // Route Guard Component
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -38,9 +46,39 @@ const App: React.FC = () => {
           </ProtectedRoute>
         }
       >
+        {/* Dashboard */}
         <Route index element={<DashboardPage />} />
+        
+        {/* Projects */}
         <Route path="projects" element={<ProjectsPage />} />
-        {/* We will add more routes here as we build out the modules */}
+        
+        {/* Office Management */}
+        <Route path="office/employees" element={<EmployeeListPage />} />
+        <Route path="office/salaries" element={<SalaryPage />} />
+        <Route path="office/expenses" element={<OfficeExpensePage />} />
+        
+        {/* Investments */}
+        <Route path="investments" element={<InvestmentListPage />} />
+        
+        {/* Property Sales */}
+        <Route path="sales" element={<SaleListPage />} />
+        <Route path="sales/properties" element={<div style={{ padding: 24 }}><h2>Properties — Coming Soon</h2></div>} />
+        <Route path="sales/customers" element={<div style={{ padding: 24 }}><h2>Customers — Coming Soon</h2></div>} />
+        
+        {/* Tuesday Payments */}
+        <Route path="tuesday-payments" element={<TuesdayPaymentPage />} />
+        
+        {/* Loans */}
+        <Route path="loans" element={<LoanListPage />} />
+        
+        {/* Reports */}
+        <Route path="reports" element={<ReportsPage />} />
+        
+        {/* Documents & Users — Coming Soon */}
+        <Route path="documents" element={<div style={{ padding: 24 }}><h2>Documents — Coming Soon</h2></div>} />
+        <Route path="users" element={<div style={{ padding: 24 }}><h2>User Management — Coming Soon</h2></div>} />
+        <Route path="contractors" element={<div style={{ padding: 24 }}><h2>Contractors — Coming Soon</h2></div>} />
+        
         <Route path="*" element={<Navigate to="/" replace />} />
       </Route>
     </Routes>

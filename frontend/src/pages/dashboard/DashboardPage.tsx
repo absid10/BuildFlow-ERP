@@ -1,5 +1,5 @@
 import React from 'react';
-import { Row, Col, Card, Typography, List, Avatar, Space } from 'antd';
+import { Row, Col, Card, Typography, List, Avatar, Space, Table, Tag } from 'antd';
 import { useQuery } from '@tanstack/react-query';
 import {
   DollarOutlined,
@@ -8,15 +8,6 @@ import {
   WalletOutlined,
   RiseOutlined,
 } from '@ant-design/icons';
-import {
-  AreaChart,
-  Area,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip as RechartsTooltip,
-  ResponsiveContainer,
-} from 'recharts';
 import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
 
@@ -24,6 +15,7 @@ import { dashboardApi } from '../../api/dashboard';
 import PageHeader from '../../components/common/PageHeader';
 import StatCard from '../../components/common/StatCard';
 import LoadingSkeleton from '../../components/common/LoadingSkeleton';
+import { formatCurrency } from '../../utils/formatters';
 
 dayjs.extend(relativeTime);
 
@@ -33,11 +25,6 @@ const DashboardPage: React.FC = () => {
   const { data: kpis, isLoading: isLoadingKPIs } = useQuery({
     queryKey: ['dashboard', 'kpis'],
     queryFn: dashboardApi.getKPIs,
-  });
-
-  const { data: revenueData, isLoading: isLoadingRevenue } = useQuery({
-    queryKey: ['dashboard', 'revenueSummary'],
-    queryFn: dashboardApi.getRevenueSummary,
   });
 
   const { data: activities, isLoading: isLoadingActivities } = useQuery({
@@ -53,13 +40,12 @@ const DashboardPage: React.FC = () => {
         extra={<Text type="secondary">{dayjs().format('MMMM D, YYYY')}</Text>}
       />
 
-      {/* KPI Cards */}
+      {/* KPI Cards — Simple, large numbers, no complex charts (client: "simple rkh bhai") */}
       <Row gutter={[24, 24]} style={{ marginBottom: 24 }}>
         <Col xs={24} sm={12} lg={8}>
           <StatCard
             title="Total Revenue"
-            value={kpis?.total_revenue || 0}
-            prefix="$"
+            value={formatCurrency(kpis?.total_revenue)}
             icon={<RiseOutlined />}
             color="blue"
             trend={kpis?.revenue_trend}
@@ -69,8 +55,7 @@ const DashboardPage: React.FC = () => {
         <Col xs={24} sm={12} lg={8}>
           <StatCard
             title="Total Expenses"
-            value={kpis?.total_expenses || 0}
-            prefix="$"
+            value={formatCurrency(kpis?.total_expenses)}
             icon={<DollarOutlined />}
             color="red"
             trend={kpis?.expense_trend}
@@ -80,8 +65,7 @@ const DashboardPage: React.FC = () => {
         <Col xs={24} sm={12} lg={8}>
           <StatCard
             title="Net Profit"
-            value={kpis?.net_profit || 0}
-            prefix="$"
+            value={formatCurrency(kpis?.net_profit)}
             icon={<WalletOutlined />}
             color="green"
             trend={kpis?.profit_trend}
@@ -91,8 +75,7 @@ const DashboardPage: React.FC = () => {
         <Col xs={24} sm={12} lg={8}>
           <StatCard
             title="Outstanding Payments"
-            value={kpis?.outstanding_payments || 0}
-            prefix="$"
+            value={formatCurrency(kpis?.outstanding_payments)}
             icon={<DollarOutlined />}
             color="orange"
             trend={kpis?.outstanding_trend}
@@ -112,8 +95,7 @@ const DashboardPage: React.FC = () => {
         <Col xs={24} sm={12} lg={8}>
           <StatCard
             title="Total Investments"
-            value={kpis?.total_investments || 0}
-            prefix="$"
+            value={formatCurrency(kpis?.total_investments)}
             icon={<ShopOutlined />}
             color="cyan"
             trend={kpis?.investments_trend}
@@ -122,80 +104,18 @@ const DashboardPage: React.FC = () => {
         </Col>
       </Row>
 
+      {/* Recent Activity — simple list, no complex graphs */}
       <Row gutter={[24, 24]}>
-        {/* Revenue Chart */}
-        <Col xs={24} lg={16}>
-          <Card bordered={false} className="chart-container" style={{ height: '100%' }}>
-            <div className="chart-title">Revenue & Expenses (YTD)</div>
-            {isLoadingRevenue ? (
-              <LoadingSkeleton />
-            ) : (
-              <div style={{ width: '100%', height: 320 }}>
-                <ResponsiveContainer>
-                  <AreaChart
-                    data={revenueData}
-                    margin={{ top: 10, right: 30, left: 0, bottom: 0 }}
-                  >
-                    <defs>
-                      <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="#3B82F6" stopOpacity={0.3} />
-                        <stop offset="95%" stopColor="#3B82F6" stopOpacity={0} />
-                      </linearGradient>
-                      <linearGradient id="colorExpense" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="#EF4444" stopOpacity={0.3} />
-                        <stop offset="95%" stopColor="#EF4444" stopOpacity={0} />
-                      </linearGradient>
-                    </defs>
-                    <XAxis dataKey="month" stroke="var(--ant-color-text-secondary)" />
-                    <YAxis
-                      stroke="var(--ant-color-text-secondary)"
-                      tickFormatter={(value) => `$${value / 1000}k`}
-                    />
-                    <CartesianGrid strokeDasharray="3 3" stroke="var(--ant-color-border-secondary)" vertical={false} />
-                    <RechartsTooltip
-                      contentStyle={{
-                        backgroundColor: 'var(--ant-color-bg-elevated)',
-                        borderColor: 'var(--ant-color-border)',
-                        borderRadius: 8,
-                        color: 'var(--ant-color-text)',
-                      }}
-                      itemStyle={{ color: 'var(--ant-color-text)' }}
-                    />
-                    <Area
-                      type="monotone"
-                      dataKey="revenue"
-                      name="Revenue"
-                      stroke="#3B82F6"
-                      strokeWidth={3}
-                      fillOpacity={1}
-                      fill="url(#colorRevenue)"
-                    />
-                    <Area
-                      type="monotone"
-                      dataKey="expenses"
-                      name="Expenses"
-                      stroke="#EF4444"
-                      strokeWidth={3}
-                      fillOpacity={1}
-                      fill="url(#colorExpense)"
-                    />
-                  </AreaChart>
-                </ResponsiveContainer>
-              </div>
-            )}
-          </Card>
-        </Col>
-
-        {/* Recent Activity */}
-        <Col xs={24} lg={8}>
-          <Card bordered={false} style={{ height: '100%', borderRadius: 12 }}>
+        <Col xs={24}>
+          <Card bordered={false} style={{ borderRadius: 12 }}>
             <div className="chart-title">Recent Activity</div>
             {isLoadingActivities ? (
-              <LoadingSkeleton avatar paragraph={{ rows: 5 }} />
+              <LoadingSkeleton />
             ) : (
               <List
                 itemLayout="horizontal"
                 dataSource={activities}
+                locale={{ emptyText: 'No recent activity' }}
                 renderItem={(item) => (
                   <List.Item style={{ borderBottomColor: 'var(--ant-color-border-secondary)' }}>
                     <List.Item.Meta

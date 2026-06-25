@@ -4,6 +4,17 @@ A production-ready Construction ERP and Real Estate Management System built with
 
 ---
 
+## 🛑 Client Specific Requirements
+
+> [!IMPORTANT]
+> The following rules must be strictly adhered to per client request:
+> 1. **Simplicity First:** The end-users are non-technical. Avoid complex charts, nested menus, or overly advanced data visualizations. Stick to clear, large numbers, simple data tables, and minimal graphs.
+> 2. **Admin-Only Advanced Features:** Complex configuration or advanced analytics should be restricted to the `admin` role.
+> 3. **Currency Formatting:** All financial values must be formatted in **Rupees (Rs / ₹)**, not Dollars.
+> 4. **Excel Exports:** "Tuesday Payments" and all financial Reports MUST support exporting to Excel/CSV for offline use.
+
+---
+
 ## Skills Applied from `antigravity-awesome-skills`
 
 > [!NOTE]
