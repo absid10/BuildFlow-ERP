@@ -51,7 +51,7 @@ async def lifespan(app: FastAPI):
             )
             session.add(admin)
             await session.commit()
-            print("✅ Default admin user created: admin@buildflow.com / admin123")
+            print("SUCCESS: Default admin user created: admin@buildflow.com / admin123")
 
     yield
 
