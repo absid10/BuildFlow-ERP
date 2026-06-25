@@ -1,0 +1,23 @@
+# Dependencies
+node_modules/
+venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+
+# Environment variables
+.env
+.env.local
+
+# Build output
+frontend/dist/
+backend/alembic/versions/*
+!backend/alembic/versions/.gitkeep
+
+# Exclude skills folder as requested
+antigravity-awesome-skills/
+
+# IDEs and OS
+.vscode/
+.idea/
+.DS_Store
