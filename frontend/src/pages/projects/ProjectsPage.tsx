@@ -1,19 +1,16 @@
 import React, { useState } from 'react';
-import { Card, Table, Button, Tag, Space, Modal, Form, Input, InputNumber, Select, DatePicker, message, Progress } from 'antd';
+import { Card, Table, Button, Tag, Space, Modal, message, Progress } from 'antd';
 import { PlusOutlined, EditOutlined, DeleteOutlined, EyeOutlined } from '@ant-design/icons';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useNavigate } from 'react-router-dom';
 import dayjs from 'dayjs';
 import PageHeader from '../../components/common/PageHeader';
 import { formatCurrency } from '../../utils/formatters';
+import { projectsApi } from '../../api/projects';
+import {
+  getCategoryLabel, getProjectTypeLabel, getOwnershipLabel,
+} from '../../utils/projectConstants';
 import type { Project, ProjectStatus } from '../../types';
-
-// ── Mock data (will swap to real API when backend is connected) ──
-const MOCK_PROJECTS: Project[] = [
-  { id: '1', name: 'Skyline Residential Tower', description: 'A 20-story luxury residential tower in DHA Phase 6', budget: 50000000, spent: 12500000, status: 'in_progress', start_date: '2025-01-15', end_date: '2026-06-30', progress_percent: 35, location: 'DHA Phase 6, Lahore', created_by: null, created_at: '2025-01-10T00:00:00Z', updated_at: '2025-06-20T00:00:00Z' },
-  { id: '2', name: 'Downtown Commercial Hub', description: 'Mixed-use commercial plaza with retail and office spaces', budget: 85000000, spent: 4500000, status: 'planning', start_date: '2025-07-01', end_date: '2027-12-31', progress_percent: 5, location: 'Gulberg III, Lahore', created_by: null, created_at: '2025-06-01T00:00:00Z', updated_at: '2025-06-18T00:00:00Z' },
-  { id: '3', name: 'Green Valley Villas', description: 'Gated community with 50 luxury villas', budget: 120000000, spent: 95000000, status: 'completed', start_date: '2023-03-01', end_date: '2025-05-30', progress_percent: 100, location: 'Bahria Town, Lahore', created_by: null, created_at: '2023-02-15T00:00:00Z', updated_at: '2025-05-30T00:00:00Z' },
-  { id: '4', name: 'Riverview Apartments', description: 'Affordable housing project near Ravi River', budget: 30000000, spent: 8000000, status: 'on_hold', start_date: '2024-09-01', end_date: '2026-03-31', progress_percent: 20, location: 'Raiwind Road, Lahore', created_by: null, created_at: '2024-08-20T00:00:00Z', updated_at: '2025-04-10T00:00:00Z' },
-];
 
 const statusColors: Record<ProjectStatus, string> = {
   planning: 'default',
@@ -32,41 +29,32 @@ const statusLabels: Record<ProjectStatus, string> = {
 };
 
 const ProjectsPage: React.FC = () => {
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [editingProject, setEditingProject] = useState<Project | null>(null);
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const [detailProject, setDetailProject] = useState<Project | null>(null);
-  const [form] = Form.useForm();
+  const [page, setPage] = useState(1);
 
-  // Mock query — will swap to real API
-  const { data: projects, isLoading } = useQuery({
-    queryKey: ['projects'],
-    queryFn: async () => MOCK_PROJECTS,
+  const { data, isLoading } = useQuery({
+    queryKey: ['projects', page],
+    queryFn: () => projectsApi.list(page, 10),
   });
 
-  const handleAdd = () => {
-    setEditingProject(null);
-    form.resetFields();
-    setIsModalOpen(true);
-  };
+  const deleteMutation = useMutation({
+    mutationFn: projectsApi.delete,
+    onSuccess: () => {
+      message.success('Project deleted');
+      queryClient.invalidateQueries({ queryKey: ['projects'] });
+    },
+    onError: () => message.error('Failed to delete project'),
+  });
 
-  const handleEdit = (project: Project) => {
-    setEditingProject(project);
-    form.setFieldsValue({
-      ...project,
-      start_date: project.start_date ? dayjs(project.start_date) : null,
-      end_date: project.end_date ? dayjs(project.end_date) : null,
+  const handleDelete = (project: Project) => {
+    Modal.confirm({
+      title: 'Delete Project',
+      content: `Are you sure you want to delete "${project.name}"? This cannot be undone.`,
+      okType: 'danger',
+      onOk: () => deleteMutation.mutate(project.id),
     });
-    setIsModalOpen(true);
-  };
-
-  const handleSave = async () => {
-    try {
-      await form.validateFields();
-      message.success(editingProject ? 'Project updated successfully' : 'Project created successfully');
-      setIsModalOpen(false);
-    } catch {
-      // validation errors shown in form
-    }
   };
 
   const columns = [
@@ -79,17 +67,33 @@ const ProjectsPage: React.FC = () => {
       ),
     },
     {
+      title: 'Category',
+      dataIndex: 'category',
+      key: 'category',
+      render: (v: string | null) => v ? getCategoryLabel(v) : '—',
+    },
+    {
+      title: 'Type',
+      dataIndex: 'project_type',
+      key: 'project_type',
+      render: (v: string | null) => v ? getProjectTypeLabel(v) : '—',
+    },
+    {
+      title: 'Ownership',
+      dataIndex: 'ownership',
+      key: 'ownership',
+      render: (v: string | null) => v ? getOwnershipLabel(v) : '—',
+    },
+    {
       title: 'Status',
       dataIndex: 'status',
       key: 'status',
       render: (status: ProjectStatus) => (
         <Tag color={statusColors[status]}>{statusLabels[status]}</Tag>
       ),
-      filters: Object.entries(statusLabels).map(([value, text]) => ({ text, value })),
-      onFilter: (value: any, record: Project) => record.status === value,
     },
     {
-      title: 'Budget',
+      title: 'Est. Budget',
       dataIndex: 'budget',
       key: 'budget',
       render: (val: number) => formatCurrency(val),
@@ -106,21 +110,21 @@ const ProjectsPage: React.FC = () => {
       dataIndex: 'progress_percent',
       key: 'progress',
       render: (val: number) => <Progress percent={val} size="small" />,
-      sorter: (a: Project, b: Project) => a.progress_percent - b.progress_percent,
     },
     {
       title: 'Location',
       dataIndex: 'location',
       key: 'location',
+      ellipsis: true,
     },
     {
       title: 'Actions',
       key: 'actions',
-      render: (_: any, record: Project) => (
+      render: (_: unknown, record: Project) => (
         <Space>
           <Button type="text" icon={<EyeOutlined />} onClick={() => setDetailProject(record)} />
-          <Button type="text" icon={<EditOutlined />} onClick={() => handleEdit(record)} />
-          <Button type="text" danger icon={<DeleteOutlined />} onClick={() => message.info('Delete confirmation would appear here')} />
+          <Button type="text" icon={<EditOutlined />} onClick={() => navigate(`/projects/${record.id}/edit`)} />
+          <Button type="text" danger icon={<DeleteOutlined />} onClick={() => handleDelete(record)} />
         </Space>
       ),
     },
@@ -132,7 +136,7 @@ const ProjectsPage: React.FC = () => {
         title="Projects"
         description="Manage your construction and real estate projects."
         extra={
-          <Button type="primary" icon={<PlusOutlined />} onClick={handleAdd}>
+          <Button type="primary" icon={<PlusOutlined />} onClick={() => navigate('/projects/new')}>
             New Project
           </Button>
         }
@@ -141,77 +145,53 @@ const ProjectsPage: React.FC = () => {
       <Card bordered={false} style={{ borderRadius: 12 }}>
         <Table
           columns={columns}
-          dataSource={projects || []}
+          dataSource={data?.items || []}
           rowKey="id"
           loading={isLoading}
-          pagination={{ pageSize: 10, showSizeChanger: true, showTotal: (total) => `Total ${total} projects` }}
+          pagination={{
+            current: page,
+            pageSize: 10,
+            total: data?.total || 0,
+            showSizeChanger: false,
+            showTotal: (total) => `Total ${total} projects`,
+            onChange: (p) => setPage(p),
+          }}
+          scroll={{ x: 1100 }}
         />
       </Card>
 
-      {/* Create / Edit Modal */}
-      <Modal
-        title={editingProject ? 'Edit Project' : 'New Project'}
-        open={isModalOpen}
-        onCancel={() => setIsModalOpen(false)}
-        onOk={handleSave}
-        okText={editingProject ? 'Update' : 'Create'}
-        width={640}
-      >
-        <Form form={form} layout="vertical" style={{ marginTop: 16 }}>
-          <Form.Item name="name" label="Project Name" rules={[{ required: true, message: 'Please enter project name' }]}>
-            <Input placeholder="e.g. Skyline Tower" />
-          </Form.Item>
-          <Form.Item name="description" label="Description">
-            <Input.TextArea rows={3} placeholder="Brief description of the project" />
-          </Form.Item>
-          <Space size="large" style={{ display: 'flex' }}>
-            <Form.Item name="budget" label="Budget (Rs)" rules={[{ required: true, message: 'Enter budget' }]}>
-              <InputNumber style={{ width: 200 }} min={0} formatter={(value) => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')} />
-            </Form.Item>
-            <Form.Item name="status" label="Status" rules={[{ required: true }]}>
-              <Select style={{ width: 180 }} placeholder="Select status">
-                {Object.entries(statusLabels).map(([val, label]) => (
-                  <Select.Option key={val} value={val}>{label}</Select.Option>
-                ))}
-              </Select>
-            </Form.Item>
-          </Space>
-          <Space size="large" style={{ display: 'flex' }}>
-            <Form.Item name="start_date" label="Start Date">
-              <DatePicker style={{ width: 200 }} />
-            </Form.Item>
-            <Form.Item name="end_date" label="End Date">
-              <DatePicker style={{ width: 200 }} />
-            </Form.Item>
-          </Space>
-          <Form.Item name="location" label="Location">
-            <Input placeholder="e.g. DHA Phase 6, Lahore" />
-          </Form.Item>
-        </Form>
-      </Modal>
-
-      {/* Detail Modal */}
       <Modal
         title="Project Details"
         open={!!detailProject}
         onCancel={() => setDetailProject(null)}
         footer={[
           <Button key="close" onClick={() => setDetailProject(null)}>Close</Button>,
-          <Button key="edit" type="primary" onClick={() => { if (detailProject) { handleEdit(detailProject); setDetailProject(null); } }}>Edit</Button>,
+          <Button key="edit" type="primary" onClick={() => {
+            if (detailProject) { navigate(`/projects/${detailProject.id}/edit`); setDetailProject(null); }
+          }}>Edit</Button>,
         ]}
-        width={640}
+        width={720}
       >
         {detailProject && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginTop: 16 }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginTop: 16 }}>
             <div><strong>Name:</strong> {detailProject.name}</div>
-            <div><strong>Description:</strong> {detailProject.description || '—'}</div>
+            <div><strong>Category:</strong> {detailProject.category ? getCategoryLabel(detailProject.category) : '—'}</div>
+            <div><strong>Type:</strong> {detailProject.project_type ? getProjectTypeLabel(detailProject.project_type) : '—'}</div>
+            <div><strong>Ownership:</strong> {detailProject.ownership ? getOwnershipLabel(detailProject.ownership) : '—'}</div>
+            {detailProject.client_name && <div><strong>Client:</strong> {detailProject.client_name}</div>}
             <div><strong>Status:</strong> <Tag color={statusColors[detailProject.status]}>{statusLabels[detailProject.status]}</Tag></div>
-            <div><strong>Budget:</strong> {formatCurrency(detailProject.budget)}</div>
+            <div><strong>Est. Budget:</strong> {formatCurrency(detailProject.budget)}</div>
             <div><strong>Spent:</strong> {formatCurrency(detailProject.spent)}</div>
             <div><strong>Progress:</strong> <Progress percent={detailProject.progress_percent} size="small" style={{ width: 200 }} /></div>
             <div><strong>Location:</strong> {detailProject.location || '—'}</div>
             <div><strong>Start Date:</strong> {detailProject.start_date ? dayjs(detailProject.start_date).format('MMM D, YYYY') : '—'}</div>
-            <div><strong>End Date:</strong> {detailProject.end_date ? dayjs(detailProject.end_date).format('MMM D, YYYY') : '—'}</div>
+            <div><strong>Expected End:</strong> {detailProject.end_date ? dayjs(detailProject.end_date).format('MMM D, YYYY') : '—'}</div>
+            {detailProject.total_land_area && (
+              <div><strong>Land Area:</strong> {detailProject.total_land_area} {detailProject.total_land_area_unit}</div>
+            )}
+            {detailProject.built_up_area && (
+              <div><strong>Built-up Area:</strong> {detailProject.built_up_area} {detailProject.built_up_area_unit}</div>
+            )}
           </div>
         )}
       </Modal>

@@ -5,6 +5,7 @@ import AppLayout from './components/layout/AppLayout';
 import LoginPage from './pages/auth/LoginPage';
 import DashboardPage from './pages/dashboard/DashboardPage';
 import ProjectsPage from './pages/projects/ProjectsPage';
+import ProjectFormPage from './pages/projects/ProjectFormPage';
 import EmployeeListPage from './pages/office/EmployeeListPage';
 import SalaryPage from './pages/office/SalaryPage';
 import OfficeExpensePage from './pages/office/OfficeExpensePage';
@@ -51,6 +52,8 @@ const App: React.FC = () => {
         
         {/* Projects */}
         <Route path="projects" element={<ProjectsPage />} />
+        <Route path="projects/new" element={<ProjectFormPage />} />
+        <Route path="projects/:id/edit" element={<ProjectFormPage />} />
         
         {/* Office Management */}
         <Route path="office/employees" element={<EmployeeListPage />} />

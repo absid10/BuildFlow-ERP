@@ -13,6 +13,10 @@ class Project(Base, UUIDMixin, TimestampMixin):
 
     name: Mapped[str] = mapped_column(Text, nullable=False)
     description: Mapped[str | None] = mapped_column(Text, nullable=True)
+    category: Mapped[str | None] = mapped_column(Text, nullable=True)
+    project_type: Mapped[str | None] = mapped_column(Text, nullable=True)
+    ownership: Mapped[str | None] = mapped_column(Text, nullable=True)
+    client_name: Mapped[str | None] = mapped_column(Text, nullable=True)
     budget: Mapped[float] = mapped_column(Numeric(15, 2), nullable=False, default=0)
     spent: Mapped[float] = mapped_column(Numeric(15, 2), nullable=False, default=0)
     status: Mapped[str] = mapped_column(
@@ -22,6 +26,11 @@ class Project(Base, UUIDMixin, TimestampMixin):
     end_date: Mapped[date | None] = mapped_column(Date, nullable=True)
     progress_percent: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
     location: Mapped[str | None] = mapped_column(Text, nullable=True)
+    payment_terms: Mapped[str | None] = mapped_column(Text, nullable=True)
+    total_land_area: Mapped[float | None] = mapped_column(Numeric(15, 2), nullable=True)
+    total_land_area_unit: Mapped[str | None] = mapped_column(Text, nullable=True)
+    built_up_area: Mapped[float | None] = mapped_column(Numeric(15, 2), nullable=True)
+    built_up_area_unit: Mapped[str | None] = mapped_column(Text, nullable=True)
     created_by: Mapped[uuid.UUID | None] = mapped_column(
         UUID(as_uuid=True), ForeignKey("users.id", ondelete="SET NULL"), nullable=True
     )

@@ -360,3 +360,53 @@ body {
 [data-theme='light'] .app-layout .ant-layout-header {
   border-bottom-color: rgba(0, 0, 0, 0.06);
 }
+
+/* === Full-screen Project Form === */
+.project-form-page {
+  margin: -24px;
+  min-height: calc(100vh - 64px);
+  display: flex;
+  flex-direction: column;
+  background: var(--form-bg, rgba(0, 0, 0, 0.02));
+}
+
+.project-form-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 24px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  background: inherit;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.project-form-body {
+  flex: 1;
+  padding: 24px;
+  max-width: 1200px;
+  width: 100%;
+  margin: 0 auto;
+}
+
+.project-form-section {
+  margin-bottom: 16px;
+  border-radius: 12px !important;
+}
+
+.project-form-footer {
+  padding: 16px 24px;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  display: flex;
+  justify-content: flex-end;
+  position: sticky;
+  bottom: 0;
+  background: inherit;
+  z-index: 10;
+}
+
+[data-theme='light'] .project-form-header,
+[data-theme='light'] .project-form-footer {
+  border-color: rgba(0, 0, 0, 0.06);
+}

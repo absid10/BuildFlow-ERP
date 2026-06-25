@@ -50,10 +50,32 @@ export interface PaginationParams {
 // ============ Project ============
 export type ProjectStatus = 'planning' | 'in_progress' | 'on_hold' | 'completed' | 'cancelled';
 
+export type ProjectCategory =
+  | 'architecture_consultancy'
+  | 'construction'
+  | 'interior_design'
+  | 'layout_development'
+  | 'plotting_survey'
+  | 'renovation';
+
+export type ProjectOwnership = 'self_owned' | 'client_owned' | 'joint_venture' | 'partnership';
+
+export type PaymentTerms =
+  | 'fixed_price'
+  | 'monthly_billing'
+  | 'running_bill'
+  | 'milestone_based'
+  | 'time_material'
+  | 'custom';
+
 export interface Project {
   id: string;
   name: string;
   description: string | null;
+  category: string | null;
+  project_type: string | null;
+  ownership: string | null;
+  client_name: string | null;
   budget: number;
   spent: number;
   status: ProjectStatus;
@@ -61,9 +83,15 @@ export interface Project {
   end_date: string | null;
   progress_percent: number;
   location: string | null;
+  payment_terms: string | null;
+  total_land_area: number | null;
+  total_land_area_unit: string | null;
+  built_up_area: number | null;
+  built_up_area_unit: string | null;
   created_by: string | null;
   created_at: string;
   updated_at: string;
+  documents?: ProjectDocument[];
 }
 
 export interface ProjectExpense {
