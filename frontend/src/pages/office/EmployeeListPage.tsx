@@ -6,23 +6,19 @@ import dayjs from 'dayjs';
 import PageHeader from '../../components/common/PageHeader';
 import { formatCurrency } from '../../utils/formatters';
 import type { Employee } from '../../types';
-
-const MOCK_EMPLOYEES: Employee[] = [
-  { id: '1', name: 'Ahmed Khan', phone: '0300-1234567', email: 'ahmed@buildflow.com', designation: 'Site Engineer', department: 'Construction', base_salary: 120000, joining_date: '2023-01-15', is_active: true, created_at: '2023-01-15T00:00:00Z', updated_at: '2025-06-01T00:00:00Z' },
-  { id: '2', name: 'Fatima Ali', phone: '0321-9876543', email: 'fatima@buildflow.com', designation: 'Accountant', department: 'Finance', base_salary: 80000, joining_date: '2023-06-01', is_active: true, created_at: '2023-06-01T00:00:00Z', updated_at: '2025-06-01T00:00:00Z' },
-  { id: '3', name: 'Usman Raza', phone: '0333-5551234', email: 'usman@buildflow.com', designation: 'Project Manager', department: 'Management', base_salary: 200000, joining_date: '2022-03-20', is_active: true, created_at: '2022-03-20T00:00:00Z', updated_at: '2025-06-01T00:00:00Z' },
-  { id: '4', name: 'Zainab Malik', phone: '0345-6789012', email: null, designation: 'Office Assistant', department: 'Admin', base_salary: 45000, joining_date: '2024-02-01', is_active: true, created_at: '2024-02-01T00:00:00Z', updated_at: '2025-06-01T00:00:00Z' },
-  { id: '5', name: 'Bilal Hussain', phone: '0312-4445556', email: null, designation: 'Driver', department: 'Operations', base_salary: 35000, joining_date: '2024-08-15', is_active: false, created_at: '2024-08-15T00:00:00Z', updated_at: '2025-03-01T00:00:00Z' },
-];
+import apiClient from '../../api/client';
 
 const EmployeeListPage: React.FC = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingEmployee, setEditingEmployee] = useState<Employee | null>(null);
   const [form] = Form.useForm();
 
-  const { data: employees, isLoading } = useQuery({
+  const { data: employees, isLoading, refetch } = useQuery({
     queryKey: ['employees'],
-    queryFn: async () => MOCK_EMPLOYEES,
+    queryFn: async () => {
+      const res = await apiClient.get('/api/v1/employees');
+      return res.data;
+    },
   });
 
   const handleAdd = () => {
@@ -42,10 +38,28 @@ const EmployeeListPage: React.FC = () => {
 
   const handleSave = async () => {
     try {
-      await form.validateFields();
-      message.success(editingEmployee ? 'Employee updated' : 'Employee added');
+      const values = await form.validateFields();
+      
+      const payload = {
+        ...values,
+        join_date: values.joining_date ? values.joining_date.format('YYYY-MM-DD') : dayjs().format('YYYY-MM-DD'),
+        is_active: true
+      };
+
+      if (editingEmployee) {
+        await apiClient.put(`/api/v1/employees/${editingEmployee.id}`, payload);
+        message.success('Employee updated');
+      } else {
+        await apiClient.post('/api/v1/employees', payload);
+        message.success('Employee added');
+      }
+      
       setIsModalOpen(false);
-    } catch { /* validation */ }
+      refetch();
+    } catch (err) {
+      console.error(err);
+      message.error('Failed to save employee');
+    }
   };
 
   const columns = [
